@@ -1,0 +1,22 @@
+Q. What is JavaScript?
+JavaScript is programming language used to create dynamic content for website. Some of its features are:
+ > Lightweight
+ > cross platformlet us intract with computer
+ > Single threaded(only executes one task at a time)
+ 
+ JavaScript is an interpreted language that executes code line by line providing more flexibility. 
+
+ JavaScript on the client side is directly executed in the user's browsers. Almost all the browsers have JavaScript interpreter and do not need to install any software you can test your JS code directly on your browsers by consoling.
+
+ JavaScript is also used on the server side to access databases, file handling and security features to send response, to browsers
+ 
+ JavaScript with runtime enviroments like NodeJs and framework like ExpressJs can be used to devlope server side applications. 
+
+Q. Variables in JavaScript?
+ In JavaScript their are four ways to declare a Variable:
+ > Automatically(x + 5)
+ > Var(var x = 5) * only use while writting code in old browsers
+ > let(let x = 5) 
+ > const(const x = 5)
+ * Always use const when the value should not be changed and type(Array and object) should not be changed, only use let if you can't use const.
+ use var if you MUST support old browsers
