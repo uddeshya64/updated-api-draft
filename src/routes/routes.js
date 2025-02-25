@@ -1,7 +1,7 @@
-import express, { Router } from "express";
+import express from "express";
 import {updateStudentStatus, createStudent, getStudents} from "../controllers/students.js";
 import {getAssessmentCriterias, createAssessmentCriteria, updateAssessmentCriteria, deleteAssessmentCriteria } from "../controllers/assessmentCriterias.js";
-import { deleteLearningOutcome, updateLearningOutcome, getLearningOutcomes, createLearningOutcome } from "../controllers/learningOutcomes.js";
+import {  getLearningOutcomes, updateLearningOutcome, createLearningOutcome, deleteLearningOutcome } from "../controllers/learningOutcomes.js";
 import { getReportOutcomes, createReportOutcome, updateReportOutcome, deleteReportOutcome } from "../controllers/reportOutcomes.js";
 import { getAssessmentCriteriaScores, setAssessmentCriteriaScore, updateAssessmentCriteriaScore } from "../controllers/assessmentCriteriasScores.js";
 import getLearningOutcomesScore from "../controllers/learningOutcomesScore.js";
@@ -37,7 +37,7 @@ routers.get('/report-outcome-mapping',getReportOutcomesMapping)
 
 routers.post('/students',createStudent)
 routers.post('/assessment-criteria',createAssessmentCriteria)
-routers.post('/learning-outcome',createLearningOutcome)
+routers.post('/learning-outcome', createLearningOutcome)
 routers.post('/assessment-criteria-score',setAssessmentCriteriaScore)
 routers.post('/learning-outcome-mapping',getLearningOutcomesMapping)
 // routers.post('/save-token',saveToken)
