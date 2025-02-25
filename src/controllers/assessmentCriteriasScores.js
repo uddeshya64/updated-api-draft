@@ -51,7 +51,7 @@ const getAssessmentCriteriaScores = async (req, res) => {
 // Set Assessment Criteria Scores
 const setAssessmentCriteriaScore = async (req, res) => {
     try {
-        const { year, quarter, classname, section, subject } = req.headers;
+        const { year, quarter, classname, section } = req.headers;
         const { ac_id, scores } = req.body;
         if (!ac_id || !scores || !Array.isArray(scores) || scores.length === 0) {
             return res.status(400).json({ error: "ac_id and an array of scores (student_id, obtained_marks) are required in the body" });
@@ -76,7 +76,7 @@ const setAssessmentCriteriaScore = async (req, res) => {
         const valuesPlaceholder = validScores.map(() => "(?, ?, ?)").join(", ");
         const flattenedValues = validScores.flat();
         const query = `
-            INSERT INTO ac_scores (student_id, ac_id, value)
+            INSERT INTO ac_scores (student_id, ac, value)
             VALUES ${valuesPlaceholder}
             ON DUPLICATE KEY UPDATE value = VALUES(value);
         `;
@@ -91,7 +91,7 @@ const setAssessmentCriteriaScore = async (req, res) => {
 // Update Assessment Criteria Scores
 const updateAssessmentCriteriaScore = async (req, res) => {
     try {
-        const { year, quarter, classname, section, subject } = req.headers;
+        const { year, quarter, classname, section } = req.headers;
         const { ac_id, scores } = req.body;
 
         // Validate request data

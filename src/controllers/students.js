@@ -39,7 +39,7 @@ const getStudents =  async (req, res) => {
                 sc.section, 
                 sc.class 
             FROM students s 
-            JOIN students_records sc ON s.id = sc.student_id 
+            JOIN students_records sc ON s.id = sc.student 
             WHERE sc.year = ? AND sc.class = ? AND sc.section = ?
         `;
         // Execute query with the year, classname, and section as parameters
@@ -153,4 +153,4 @@ const updateStudentStatus = async (req, res) => {
     }
 };
 
-export default {updateStudentStatus, createStudent, getStudents};
+export {updateStudentStatus, createStudent, getStudents};

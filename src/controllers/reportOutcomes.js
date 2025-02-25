@@ -29,7 +29,7 @@ const getReportOutcomes = async (req, res) => {
         }
 
         const loQuery = `
-            SELECT id AS lo_id, name AS lo_name, ro_id
+            SELECT id AS lo_id, name AS lo_name
             FROM learning_outcomes
             WHERE ro_id IN (${roIds.map(() => "?").join(", ")})
         `;

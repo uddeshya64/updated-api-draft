@@ -14,7 +14,7 @@ const getAssessmentCriterias = async (req, res) => {
 
     try {
         const query = `
-            SELECT id, name, max_marks, lo_id
+            SELECT id, name, max_marks
             FROM assessment_criterias
             WHERE subject = ? AND year = ? AND quarter = ? AND class = ?
         `;

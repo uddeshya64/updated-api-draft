@@ -9,7 +9,7 @@ import getReportOutcomesScore from "../controllers/reportOutcomesScore.js";
 import {getReportOutcomesMapping,updateReportOutcomeMapping} from "../controllers/reportOutcomesMapping.js";
 // import { getClassAverageACScore, getClassAverageLOScore, getClassAverageROScore } from "../controllers/classAverageScore.js";
 import { getLearningOutcomesMapping, updateLearningOutcomeMapping } from "../controllers/learningOutcomesMapping.js";
-import getTeachers from "../controllers/teachers.js";
+import { getTeachers } from "../controllers/teachers.js";
 // import { saveToken, sendNotification } from "../controllers/sendNotification.js";
 
 

@@ -176,4 +176,4 @@ const deleteLearningOutcome = async (req, res) => {
     }
 };
 
-export default { getLearningOutcomes, updateLearningOutcome, createLearningOutcome, deleteLearningOutcome };
+export { getLearningOutcomes, updateLearningOutcome, createLearningOutcome, deleteLearningOutcome };

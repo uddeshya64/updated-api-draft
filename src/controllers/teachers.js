@@ -75,5 +75,5 @@ const updateTeacher = async (req, res) => {
     }
 };
 
-export default {updateTeacher, getTeachers, createTeacher};
+export {updateTeacher, getTeachers, createTeacher};
 
