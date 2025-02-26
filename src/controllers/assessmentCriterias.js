@@ -2,7 +2,7 @@ import db from "../config/db.js";
 
 // Get Assessment Criterias
 const getAssessmentCriterias = async (req, res) => {
-    const { subject, year, quarter, classname } = req.headers; // Extract from headers
+    const { subject, year, quarter, classname } = req.headers; 
 
     console.log(`Subject: ${subject}, Year: ${year}, Quarter: ${quarter}, Class: ${classname}`);
 
