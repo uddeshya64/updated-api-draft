@@ -2,10 +2,11 @@ import db from "../config/db.js";
 
 // Get Assessment Criterias
 const getAssessmentCriterias = async (req, res) => {
-    const { subject, year, quarter, classname } = req.headers; // Extract headers
+    const { subject, year, quarter, classname } = req.headers; // Extract from headers
 
     console.log(`Subject: ${subject}, Year: ${year}, Quarter: ${quarter}, Class: ${classname}`);
 
+    // Validate required headers
     if (!subject || !year || !quarter || !classname) {
         return res.status(400).json({
             message: 'Invalid input. Subject, Class, Year, and Quarter are required in the headers.',
@@ -23,38 +24,42 @@ const getAssessmentCriterias = async (req, res) => {
 
         if (results.length === 0) {
             return res.status(404).json({
-                message: 'No assessment criterias found for the given filters.',
+                message: 'No assessment criteria found for the given filters.',
             });
         }
 
         return res.status(200).json({
-            message: 'Assessment criterias retrieved successfully',
+            message: 'Assessment criteria retrieved successfully',
             assessments: results,
         });
     } catch (err) {
-        console.error('Error retrieving assessment criterias:', err);
+        console.error('Error retrieving assessment criteria:', err);
+
         return res.status(500).json({
-            message: 'Server error while fetching assessment criterias',
+            message: 'Server error while fetching assessment criteria',
             error: err.message,
         });
     }
 };
+
 
 // Create Assessment Criteria
 const createAssessmentCriteria = async (req, res) => {
     const { year, quarter, subject, classname } = req.headers;
     const { max_marks, name, lo_id } = req.body;
 
-    if (!year || !quarter || !subject || !classname || !max_marks || !name || !lo_id) {
+    // Validate required fields
+    if (!year || !quarter || !subject || !classname || !max_marks || !name || !lo_id || !Array.isArray(lo_id)) {
         return res.status(400).json({
-            message: 'Missing required fields. Ensure year, quarter, class, subject (headers), and max_marks, name, lo_id (body) are provided.',
+            message: 'Missing or invalid required fields. Ensure year, quarter, class, subject (headers), and max_marks, name, lo_id (array in body) are provided.',
         });
     }
 
     try {
+        // Insert new assessment criteria
         const insertQuery = `
-            INSERT INTO assessment_criterias (name, max_marks, year, quarter, subject, class, lo_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO assessment_criterias (name, max_marks, year, quarter, subject, class)
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
 
         const [result] = await db.execute(insertQuery, [
@@ -63,13 +68,24 @@ const createAssessmentCriteria = async (req, res) => {
             year,
             quarter,
             subject,
-            classname,
-            lo_id
+            classname
         ]);
 
+        const acId = result.insertId; // Get the newly inserted AC ID
+
+        // Insert LO-AC mappings
+        const mappingQuery = `
+            INSERT INTO lo_ac_mapping (lo, ac, priority, weight)
+            VALUES (?, ?, NULL, NULL)
+        `;
+
+        for (const lo of lo_id) {
+            await db.execute(mappingQuery, [lo, acId]); // Insert each mapping
+        }
+
         return res.status(201).json({
-            message: 'Assessment criterion added successfully',
-            insertedId: result.insertId,
+            message: 'Assessment criterion added successfully with LO mappings',
+            insertedId: acId,
         });
     } catch (err) {
         console.error('Error inserting assessment criteria:', err);
@@ -87,25 +103,28 @@ const createAssessmentCriteria = async (req, res) => {
     }
 };
 
+
 // Update Assessment Criteria
 const updateAssessmentCriteria = async (req, res) => {
-    const { id } = req.params; // Get ID from request params
+    const { id } = req.params; // Get AC ID from URL params
     const { name, max_marks, lo_id } = req.body;
 
-    if (!id || !name || !max_marks || !lo_id) {
+    // Validate required fields
+    if (!id || !name || !max_marks || !lo_id || !Array.isArray(lo_id)) {
         return res.status(400).json({
-            message: 'Missing required fields. Ensure id (params), name, max_marks, and lo_id (body) are provided.',
+            message: 'Missing or invalid required fields. Ensure id (params), name, max_marks, and lo_id (array in body) are provided.',
         });
     }
 
     try {
+        // Update assessment_criteria details
         const updateQuery = `
             UPDATE assessment_criterias
-            SET name = ?, max_marks = ?, lo_id = ?
+            SET name = ?, max_marks = ?
             WHERE id = ?
         `;
 
-        const [result] = await db.execute(updateQuery, [name, max_marks, lo_id, id]);
+        const [result] = await db.execute(updateQuery, [name, max_marks, id]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({
@@ -113,8 +132,22 @@ const updateAssessmentCriteria = async (req, res) => {
             });
         }
 
+        // Remove existing mappings for this AC
+        const deleteMappingQuery = `DELETE FROM lo_ac_mapping WHERE ac = ?`;
+        await db.execute(deleteMappingQuery, [id]);
+
+        // Insert new LO-AC mappings
+        const insertMappingQuery = `
+            INSERT INTO lo_ac_mapping (lo, ac, priority, weight)
+            VALUES (?, ?, NULL, NULL)
+        `;
+
+        for (const lo of lo_id) {
+            await db.execute(insertMappingQuery, [lo, id]);
+        }
+
         return res.status(200).json({
-            message: 'Assessment criterion updated successfully',
+            message: 'Assessment criterion updated successfully with new LO mappings',
         });
     } catch (err) {
         console.error('Error updating assessment criteria:', err);
@@ -124,6 +157,7 @@ const updateAssessmentCriteria = async (req, res) => {
         });
     }
 };
+
 
 // Delete Assessment Criteria
 const deleteAssessmentCriteria = async (req, res) => {
