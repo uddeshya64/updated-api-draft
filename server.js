@@ -10,9 +10,9 @@ const PORT = process.env.PORT || 8080;
 
 app.use(cors({
     origin: ["http://localhost:3000", "http://localhost:3001", "https://mayoor-flax.vercel.app"],
-    methods: ['GET', 'POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', "subject", "year", "classname", "quarter", "section", "ac_id", "lo_id", "ro_id", "student_id"],
+    allowedHeaders: ['Content-Type', 'Authorization', "subject", "year", "classname", "quarter", "section", "ac_id", "lo_id", "ro_id", "id"],
 }));
 
 app.use(bodyParser.json());

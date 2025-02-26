@@ -54,7 +54,26 @@ const createAssessmentCriteria = async (req, res) => {
             message: 'Missing or invalid required fields. Ensure year, quarter, class, subject (headers), and max_marks, name, lo_id (array in body) are provided.',
         });
     }
+// POST: Add a new teacher
+const createTeacher = async (req, res) => {
+    const { name, email, class: teacherClass, section, subject, role } = req.body;
 
+    // Validate required fields
+    if (!name || !email || !teacherClass || !section || !subject || !role) {
+        return res.status(400).json({ message: "All fields (name, email, class, section, subject, role) are required." });
+    }
+
+    try {
+        // Insert new teacher into database
+        const query = `INSERT INTO teachers (name, email, class, section, subject, role) VALUES (?, ?, ?, ?, ?, ?)`;
+        await db.execute(query, [name, email, teacherClass, section, subject, role]);
+
+        res.status(201).json({ message: "Teacher added successfully." });
+    } catch (err) {
+        console.error("Error adding teacher:", err);
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
+};
     try {
         // Insert new assessment criteria
         const insertQuery = `
