@@ -60,7 +60,7 @@ const updateLearningOutcomeMapping = async (req, res) => {
 
         // Fetch valid students
         const [studentRows] = await db.query(
-            "SELECT student FROM students_records WHERE year = ? AND class = ? AND section = ?",
+            "SELECT student_id FROM students_records WHERE year = ? AND class = ? AND section = ?",
             [year, classname, section]
         );
         if (studentRows.length === 0) {
@@ -112,10 +112,26 @@ const updateLearningOutcomeMapping = async (req, res) => {
                     loScore += weight * acScoreRows[0].value;
                 }
             }
-            await db.query(
-                "UPDATE lo_scores SET value = ? WHERE lo = ? AND student = ?",
-                [loScore, lo_id, student_id]
+
+            // Check if an entry already exists for this lo_id and student
+            const [existingScore] = await db.query(
+                "SELECT value FROM lo_scores WHERE lo = ? AND student = ?",
+                [lo_id, student_id]
             );
+
+            if (existingScore.length > 0) {
+                // Update existing record
+                await db.query(
+                    "UPDATE lo_scores SET value = ? WHERE lo = ? AND student = ?",
+                    [loScore, lo_id, student_id]
+                );
+            } else {
+                // Insert new record if not exists
+                await db.query(
+                    "INSERT INTO lo_scores (lo, student, value) VALUES (?, ?, ?)",
+                    [lo_id, student_id, loScore]
+                );
+            }
         }
 
         res.status(200).json({
