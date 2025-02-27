@@ -7,25 +7,23 @@ const getTeachers = async (req, res) => {
         let queryParams = [];
         let query = `
             SELECT 
-                t.id, t.name, t.email, t.role, t.status, t.last_seen,
-                c.name AS classname, s.name AS section, sub.name AS subject
+                t.id, t.name AS teacher_name, t.email, t.role, t.status, t.last_seen,
+                c.name, s.name AS section, sub.name AS subject
             FROM teachers t
             LEFT JOIN teacher_allocation ta ON t.id = ta.teacher
             LEFT JOIN classes c ON ta.class = c.id
             LEFT JOIN sections s ON ta.section = s.id
             LEFT JOIN subjects sub ON ta.subject = sub.id
         `;
-
         if (classname && section) {
-            query += " WHERE c.name = ? AND s.name = ?";
+            query += " WHERE c.id = ? AND s.id = ?";
             queryParams.push(classname, section);
         } else if (classname) {
-            query += " WHERE c.name = ?";
+            query += " WHERE c.id = ?";
             queryParams.push(classname);
         }
 
         query += " ORDER BY t.id";
-
         const [teachers] = await db.execute(query, queryParams);
 
         if (teachers.length === 0) {
@@ -41,16 +39,14 @@ const getTeachers = async (req, res) => {
 
 // POST: Add a new teacher and allocate them
 const createTeacher = async (req, res) => {
-    const { name, email, teacherClass, section, subject, role } = req.body;
+    const { name, email, classname, section, subject, role } = req.body;
 
     // Validate required fields
-    if (!name || !email || !teacherClass || !section || !subject || !role) {
+    if (!name || !email || !classname || !section || !subject || !role) {
         return res.status(400).json({ message: "All fields (name, email, class, section, subject, role) are required." });
     }
 
     try {
-        await db.beginTransaction(); // Start transaction
-
         // Insert teacher into `teachers` table
         const teacherQuery = `
             INSERT INTO teachers (name, email, role, status, last_seen)
@@ -65,17 +61,17 @@ const createTeacher = async (req, res) => {
         const teacherId = teacherData[0].id;
 
         // Get Class ID
-        const [classData] = await db.execute("SELECT id FROM classes WHERE name = ?", [teacherClass]);
+        const [classData] = await db.execute("SELECT id FROM classes WHERE id = ?", [classname]);
         if (classData.length === 0) throw new Error("Invalid class name.");
         const classId = classData[0].id;
 
         // Get Section ID
-        const [sectionData] = await db.execute("SELECT id FROM sections WHERE name = ?", [section]);
+        const [sectionData] = await db.execute("SELECT id FROM sections WHERE id = ?", [section]);
         if (sectionData.length === 0) throw new Error("Invalid section name.");
         const sectionId = sectionData[0].id;
 
         // Get Subject ID
-        const [subjectData] = await db.execute("SELECT id FROM subjects WHERE name = ?", [subject]);
+        const [subjectData] = await db.execute("SELECT id FROM subjects WHERE id = ?", [subject]);
         if (subjectData.length === 0) throw new Error("Invalid subject name.");
         const subjectId = subjectData[0].id;
 
@@ -90,18 +86,14 @@ const createTeacher = async (req, res) => {
         // If the teacher is a class teacher, add to `class_teacher` table
         if (role.toLowerCase() === "class teacher") {
             const classTeacherQuery = `
-                INSERT INTO class_teacher (teacher_id, class_id, section_id)
+                INSERT INTO class_teacher (teacher, class, section)
                 VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE class_id = VALUES(class_id), section_id = VALUES(section_id);
+                ON DUPLICATE KEY UPDATE class = VALUES(class), section = VALUES(section);
             `;
             await db.execute(classTeacherQuery, [teacherId, classId, sectionId]);
         }
-
-        await db.commit(); // Commit transaction
-
         res.status(201).json({ message: "Teacher added and assigned successfully." });
-    } catch (err) {
-        await db.rollback(); // Rollback on error
+    } catch (err) { // Rollback on error
         console.error("Error adding teacher:", err.message);
         res.status(500).json({ message: "Server error", error: err.message });
     }
@@ -111,7 +103,7 @@ const createTeacher = async (req, res) => {
 // PUT: Update teacher details
 const updateTeacher = async (req, res) => {
     const { id } = req.query;
-    const { name, email, teacherClass, section, subject, role } = req.body;
+    const { name, email, classname, section, subject, role } = req.body;
 
     // Validate teacher ID
     if (!id || isNaN(id)) {
@@ -119,7 +111,6 @@ const updateTeacher = async (req, res) => {
     }
 
     try {
-        await db.beginTransaction(); // Start transaction
 
         // Check if the teacher exists
         const [teacherExists] = await db.execute("SELECT id, role FROM teachers WHERE id = ?", [id]);
@@ -142,20 +133,20 @@ const updateTeacher = async (req, res) => {
             await db.execute(updateQuery, values);
         }
 
-        // If teacherClass, section, or subject needs updating
+        // If classname, section, or subject needs updating
         let classId = null, sectionId = null, subjectId = null;
-        if (teacherClass) {
-            const [classData] = await db.execute("SELECT id FROM classes WHERE name = ?", [teacherClass]);
+        if (classname) {
+            const [classData] = await db.execute("SELECT id FROM classes WHERE id = ?", [classname]);
             if (classData.length === 0) throw new Error("Invalid class name.");
             classId = classData[0].id;
         }
         if (section) {
-            const [sectionData] = await db.execute("SELECT id FROM sections WHERE name = ?", [section]);
+            const [sectionData] = await db.execute("SELECT id FROM sections WHERE id = ?", [section]);
             if (sectionData.length === 0) throw new Error("Invalid section name.");
             sectionId = sectionData[0].id;
         }
         if (subject) {
-            const [subjectData] = await db.execute("SELECT id FROM subjects WHERE name = ?", [subject]);
+            const [subjectData] = await db.execute("SELECT id FROM subjects WHERE id = ?", [subject]);
             if (subjectData.length === 0) throw new Error("Invalid subject name.");
             subjectId = subjectData[0].id;
         }
@@ -201,11 +192,8 @@ const updateTeacher = async (req, res) => {
             }
         }
 
-        await db.commit(); // Commit transaction
-
         res.status(200).json({ message: "Teacher updated successfully." });
     } catch (err) {
-        await db.rollback(); // Rollback on error
         console.error("Error updating teacher:", err.message);
         res.status(500).json({ message: "Server error", error: err.message });
     }

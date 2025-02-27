@@ -3,10 +3,10 @@ import db from "../config/db.js";
 
 // GET Report Outcomes with their Learning Outcomes
 const getReportOutcomes = async (req, res) => {
-    const { year, classname, section, quarter, subject } = req.headers;
+    const { year, subject } = req.headers;
 
-    if (!year || !classname || !section || !quarter || !subject) {
-        return res.status(400).json({ message: "Missing required headers: year, class, section, quarter, or subject" });
+    if (!year || !subject) {
+        return res.status(400).json({ message: "Missing required headers: year or subject" });
     }
 
     try {
@@ -14,33 +14,34 @@ const getReportOutcomes = async (req, res) => {
         const roQuery = `
             SELECT id AS ro_id, name AS ro_name
             FROM report_outcomes
-            WHERE year = ? AND class = ? AND section = ? AND quarter = ? AND subject = ?
+            WHERE year = ? AND subject = ?
         `;
-        const [reportOutcomes] = await db.execute(roQuery, [year, classname, section, quarter, subject]);
+        const [reportOutcomes] = await db.execute(roQuery, [year, subject]);
 
         if (reportOutcomes.length === 0) {
             return res.status(404).json({ message: "No report outcomes found for the given filters" });
         }
 
-        // Fetch LO mappings from ro_lo_mapping
+        // Get list of RO IDs
         const roIds = reportOutcomes.map(ro => ro.ro_id);
-        if (roIds.length === 0) {
-            return res.status(200).json(reportOutcomes); // No Report Outcomes, return empty response
+
+        console.log("RO IDs:", roIds); // Debugging log
+
+        let learningOutcomes = [];
+        if (roIds.length > 0) {
+            const placeholders = roIds.map(() => "?").join(", ");
+            const loQuery = `
+                SELECT lom.ro, lo.id AS lo_id, lo.name AS lo_name, lom.priority, lom.weight
+                FROM ro_lo_mapping lom
+                LEFT JOIN learning_outcomes lo ON lom.lo= lo.id
+                WHERE lom.ro IN (${placeholders})
+            `;
+            [learningOutcomes] = await db.execute(loQuery, [...roIds]);
         }
-
-        const loQuery = `
-            SELECT lom.ro_id, lo.id AS lo_id, lo.name AS lo_name, lom.priority, lom.weight
-            FROM ro_lo_mapping lom
-            JOIN learning_outcomes lo ON lom.lo_id = lo.id
-            WHERE lom.ro_id IN (${roIds.map(() => "?").join(", ")})
-        `;
-        const [learningOutcomes] = await db.execute(loQuery, roIds);
-
-        // Map Learning Outcomes to corresponding Report Outcomes
         const roWithLO = reportOutcomes.map(ro => ({
             ...ro,
             learning_outcomes: learningOutcomes
-                .filter(lo => lo.ro_id === ro.ro_id)
+                .filter(lo => lo.ro === ro.ro_id && lo.lo_id !== null) // Ensure only valid LOs
                 .map(lo => ({
                     lo_id: lo.lo_id,
                     lo_name: lo.lo_name,
@@ -51,10 +52,11 @@ const getReportOutcomes = async (req, res) => {
 
         res.status(200).json(roWithLO);
     } catch (err) {
-        console.error("Error fetching report outcomes with learning outcomes:", err);
+        console.error("Error fetching report outcomes:", err);
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
 
 
 // POST Report Outcome
@@ -69,10 +71,10 @@ const createReportOutcome = async (req, res) => {
     try {
         // Insert new Report Outcome (assuming 'id' is auto-incremented)
         const query = `
-            INSERT INTO report_outcomes (name, year, class, section, quarter, subject) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO report_outcomes (name, year, subject) 
+            VALUES (?, ?, ?)
         `;
-        const [result] = await db.execute(query, [name, year, classname, section, quarter, subject]);
+        const [result] = await db.execute(query, [name, year, subject]);
 
         // Fetch the newly inserted report outcome
         const [newRO] = await db.execute(
@@ -93,7 +95,7 @@ const createReportOutcome = async (req, res) => {
 
 // UPDATE Report Outcome
 const updateReportOutcome = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.query;
     const { name } = req.body;
 
     if (!id || !name) {
