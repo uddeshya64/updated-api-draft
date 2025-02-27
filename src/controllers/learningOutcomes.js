@@ -100,12 +100,10 @@ const createLearningOutcome = async (req, res) => {
     }
 };
 
-
-//UPDATE lo
 const updateLearningOutcome = async (req, res) => {
     const { id } = req.query;
     const { year, quarter, classname, subject } = req.headers;
-    const { name, ro_id } = req.body;
+    const { name, ro_id, priority } = req.body;
 
     if (!id || !year || !quarter || !classname || !subject) {
         return res.status(400).json({
@@ -119,11 +117,10 @@ const updateLearningOutcome = async (req, res) => {
         });
     }
 
-    const connection = await db.getConnection(); // Transaction handling
+    const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
 
-        // Check if the LO exists
         const [existingLO] = await connection.execute(
             `SELECT id FROM learning_outcomes WHERE id = ? AND year = ? AND quarter = ? AND class = ? AND subject = ?`,
             [id, year, quarter, classname, subject]
@@ -133,7 +130,6 @@ const updateLearningOutcome = async (req, res) => {
             return res.status(404).json({ message: "Learning outcome not found for the given filters." });
         }
 
-        // Update LO Name if provided
         if (name) {
             await connection.execute(
                 `UPDATE learning_outcomes SET name = ? WHERE id = ?`,
@@ -141,29 +137,63 @@ const updateLearningOutcome = async (req, res) => {
             );
         }
 
-        // Update RO-LO mappings if `ro_id` is provided
         if (ro_id) {
-            // Remove existing mappings
             await connection.execute(`DELETE FROM ro_lo_mapping WHERE lo = ?`, [id]);
-
-            // Insert new mappings
             const mappingQuery = `INSERT INTO ro_lo_mapping (ro, lo, priority, weight) VALUES ?`;
-            const mappingValues = ro_id.map(ro => [ro, id, null, null]);
+            const mappingValues = ro_id.map(ro => [ro, id, priority || null, null]);
             await connection.query(mappingQuery, [mappingValues]);
         }
 
-        await connection.commit();
+        for (const ro of ro_id) {
+            await recalculateROWeightAndScore(connection, ro);
+        }
 
-        res.status(200).json({ message: "Learning outcome updated successfully." });
+        await connection.commit();
+        res.status(200).json({ message: "Learning outcome updated successfully with recalculated RO weight and score." });
     } catch (err) {
         await connection.rollback();
         console.error("Error updating learning outcome:", err);
         res.status(500).json({ message: "Server error", error: err.message });
     } finally {
-        connection.release(); // Release DB connection
+        connection.release();
     }
 };
 
+const recalculateROWeightAndScore = async (connection, roId) => {
+    const [loMappings] = await connection.execute(
+        `SELECT lo, priority FROM ro_lo_mapping WHERE ro = ?`,
+        [roId]
+    );
+
+    let totalWeight = 0;
+    for (const { lo, priority } of loMappings) {
+        const weight = priority ? parseFloat(priority) * 10 : 10;
+        await connection.execute(
+            `UPDATE ro_lo_mapping SET weight = ? WHERE ro = ? AND lo = ?`,
+            [weight, roId, lo]
+        );
+        totalWeight += weight;
+    }
+
+    await connection.execute(
+        `UPDATE ro SET total_weight = ? WHERE id = ?`,
+        [totalWeight, roId]
+    );
+
+    // Recalculate RO Scores
+    const [studentScores] = await connection.execute(
+        `SELECT student, SUM(value) AS total_score FROM lo_scores WHERE lo IN (SELECT lo FROM ro_lo_mapping WHERE ro = ?) GROUP BY student`,
+        [roId]
+    );
+
+    for (const { student, total_score } of studentScores) {
+        await connection.execute(
+            `INSERT INTO ro_scores (student, ro, value) VALUES (?, ?, ?) 
+             ON DUPLICATE KEY UPDATE value = VALUES(value)`,
+            [student, roId, total_score]
+        );
+    }
+};
 
 const deleteLearningOutcome = async (req, res) => {
     const { lo_id } = req.params; // Expecting LO ID in URL
