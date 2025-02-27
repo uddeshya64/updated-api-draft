@@ -48,20 +48,20 @@ const getAssessmentCriteriaScores = async (req, res) => {
 // Set Assessment Criteria Scores
 const setAssessmentCriteriaScore = async (req, res) => {
     try {
-        const { year, quarter, classname, section_id } = req.headers;
+        const { year, quarter, classname, section } = req.headers;
         const { ac_id, scores } = req.body;
 
         if (!ac_id || !scores || !Array.isArray(scores) || scores.length === 0) {
             return res.status(400).json({ error: "ac_id and an array of scores (student_id, obtained_marks) are required in the body" });
         }
 
-        if (!year || !quarter || !classname || !section_id) {
-            return res.status(400).json({ error: "year, quarter, classname, and section_id are required in the headers" });
+        if (!year || !quarter || !classname || !section) {
+            return res.status(400).json({ error: "year, quarter, classname, and sectionare required in the headers" });
         }
 
         const [criteriaRows] = await db.query(
-            "SELECT max_marks FROM assessment_criterias WHERE id = ? AND quarter = ? AND year = ? AND class = ? AND section = ?",
-            [ac_id, quarter, year, classname, section_id]
+            "SELECT max_marks FROM assessment_criterias WHERE id = ? AND quarter = ? AND year = ? AND class = ?",
+            [ac_id, quarter, year, classname]
         );
 
         if (criteriaRows.length === 0) {

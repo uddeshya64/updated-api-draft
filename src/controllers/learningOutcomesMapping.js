@@ -60,7 +60,7 @@ const updateLearningOutcomeMapping = async (req, res) => {
 
         // Fetch valid students
         const [studentRows] = await db.query(
-            "SELECT student_id FROM students_records WHERE year = ? AND class = ? AND section = ?",
+            "SELECT student FROM students_records WHERE year = ? AND class = ? AND section = ?",
             [year, classname, section]
         );
         if (studentRows.length === 0) {
@@ -91,7 +91,7 @@ const updateLearningOutcomeMapping = async (req, res) => {
             const { ac_id, priority } = item;
             let weight = priorityValues[priority] / totalDenominator;
             await db.query(
-                "UPDATE lo_ac_mapping SET weight = ?, priority = ? WHERE lo_id = ? AND ac_id = ?",
+                "UPDATE lo_ac_mapping SET weight = ?, priority = ? WHERE lo = ? AND ac = ?",
                 [weight, priority, lo_id, ac_id]
             );
             return { ac_id, weight };
@@ -105,7 +105,7 @@ const updateLearningOutcomeMapping = async (req, res) => {
             for (const mapping of mappings) {
                 const { ac_id, weight } = mapping;
                 const [acScoreRows] = await db.query(
-                    "SELECT value FROM ac_scores WHERE ac_id = ? AND student_id = ?",
+                    "SELECT value FROM ac_scores WHERE ac = ? AND student = ?",
                     [ac_id, student_id]
                 );
                 if (acScoreRows.length > 0) {
@@ -113,7 +113,7 @@ const updateLearningOutcomeMapping = async (req, res) => {
                 }
             }
             await db.query(
-                "UPDATE lo_scores SET value = ? WHERE lo_id = ? AND student_id = ?",
+                "UPDATE lo_scores SET value = ? WHERE lo = ? AND student = ?",
                 [loScore, lo_id, student_id]
             );
         }
