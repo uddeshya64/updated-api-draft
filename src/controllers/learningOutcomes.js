@@ -103,7 +103,7 @@ const createLearningOutcome = async (req, res) => {
 
 //UPDATE lo
 const updateLearningOutcome = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.query;
     const { year, quarter, classname, subject } = req.headers;
     const { name, ro_id } = req.body;
 

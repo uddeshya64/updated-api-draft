@@ -96,7 +96,7 @@ const createStudent = async (req, res) => {
         await db.execute(studentQuery, [studentId, name]);
 
         // Insert student record
-        const recordQuery = `INSERT INTO students_records (student_id, year, class, section) VALUES (?, ?, ?, ?)`;
+        const recordQuery = `INSERT INTO students_records (student, year, class, section) VALUES (?, ?, ?, ?)`;
         await db.execute(recordQuery, [studentId, year, className, section]);
 
         res.status(201).json({
@@ -119,8 +119,9 @@ const createStudent = async (req, res) => {
 
 // PUT: Update Student Status
 const updateStudentStatus = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.query;
     const { status } = req.body;
+
 
     // Validate student ID
     if (!id || isNaN(id)) {

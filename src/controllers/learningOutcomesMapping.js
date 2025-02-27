@@ -34,7 +34,7 @@ const getLearningOutcomesMapping = async (req, res) => {
 
 const updateLearningOutcomeMapping = async (req, res) => {
     try {
-        const { lo_id } = req.params;
+        const { lo_id } = req.query;
         const { year, quarter, classname, section, subject } = req.headers;
         const { data } = req.body;
 

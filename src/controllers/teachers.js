@@ -99,7 +99,7 @@ const createTeacher = async (req, res) => {
 
 // PUT: Update teacher details
 const updateTeacher = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.query;
     const { name, email, teacherClass, section, subject, role } = req.body;
 
     // Validate teacher ID
