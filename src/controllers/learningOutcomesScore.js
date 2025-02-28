@@ -10,11 +10,11 @@ const getLearningOutcomesScore = async (req, res) => {
             });
         }
         // Start building the query to fetch lo_scores
-        let query = `SELECT ls.lo_id, ls.value FROM lo_scores ls WHERE ls.student_id = ?`;
+        let query = `SELECT ls.lo, ls.value FROM lo_scores ls WHERE ls.student = ?`;
         let queryParams = [student_id];
         // If lo_id is provided, filter by it
         if (lo_id) {
-            query += " AND ls.lo_id = ?";
+            query += " AND ls.lo = ?";
             queryParams.push(lo_id);
         }
         // Execute the query

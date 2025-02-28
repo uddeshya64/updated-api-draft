@@ -149,6 +149,13 @@ const updateAssessmentCriteria = async (req, res) => {
         connection.release();
     }
 };
+
+const priorityValues = {
+    h: 0.5,
+    m: 0.3,
+    l: 0.2,
+};
+
 // Function
 const recalculateLOWeightAndScore = async (connection, loId) => {
     // Fetch all ACs mapped to this LO

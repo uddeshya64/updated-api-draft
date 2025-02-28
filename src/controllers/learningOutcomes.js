@@ -100,6 +100,12 @@ const createLearningOutcome = async (req, res) => {
     }
 };
 
+
+const priorityValues = {
+    h: 0.5,
+    m: 0.3,
+    l: 0.2,
+};
 const updateLearningOutcome = async (req, res) => {
     const { id } = req.query;
     const { year, quarter, classname, subject } = req.headers;
@@ -196,7 +202,7 @@ const recalculateROWeightAndScore = async (connection, roId) => {
 };
 
 const deleteLearningOutcome = async (req, res) => {
-    const { lo_id } = req.params; // Expecting LO ID in URL
+    const { lo_id } = req.query; // Expecting LO ID in URL
 
     if (!lo_id) {
         return res.status(400).json({ message: "Missing required parameter: lo_id" });

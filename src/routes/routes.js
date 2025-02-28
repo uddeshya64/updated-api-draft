@@ -7,7 +7,7 @@ import { getAssessmentCriteriaScores, setAssessmentCriteriaScore, updateAssessme
 import getLearningOutcomesScore from "../controllers/learningOutcomesScore.js";
 import getReportOutcomesScore from "../controllers/reportOutcomesScore.js";
 import {getReportOutcomesMapping,updateReportOutcomeMapping} from "../controllers/reportOutcomesMapping.js";
-import { getClassAverageACScore, getClassAverageLOScore, getClassAverageROScore } from "../controllers/classAverageScore.js";
+import {  getClassAverageACScore, getClassAverageLOScore, getClassAverageROScore  } from "../controllers/classAverageScore.js";
 import { getLearningOutcomesMapping, updateLearningOutcomeMapping } from "../controllers/learningOutcomesMapping.js";
 import { createTeacher, getTeachers, updateTeacher } from "../controllers/teachers.js";
 import { getClassAverageLO, getClassAverageRO, getClassAverageAC} from  "../controllers/classOverviewAverage.js"
@@ -21,8 +21,6 @@ routers.get("/teachers", getTeachers)
 routers.get('/assessment-criteria',getAssessmentCriterias)
 routers.get('/learning-outcome',getLearningOutcomes)
 routers.get('/report-outcome',getReportOutcomes)
-routers.post('/report-outcome',createReportOutcome)
-routers.put('/report-outcome',updateReportOutcome)
 routers.get('/assessment-criteria-score',getAssessmentCriteriaScores)
 routers.get('/learning-outcome-score',getLearningOutcomesScore)
 routers.get('/report-outcome-score',getReportOutcomesScore)
@@ -41,6 +39,7 @@ routers.post('/assessment-criteria',createAssessmentCriteria)
 routers.post('/learning-outcome', createLearningOutcome)
 routers.post('/assessment-criteria-score',setAssessmentCriteriaScore)
 routers.post('/learning-outcome-mapping',getLearningOutcomesMapping)
+routers.post('/report-outcome',createReportOutcome)
 // routers.post('/save-token',saveToken)
 // routers.post('/send-notifications',sendNotification)
 // routers.post('/verify-token',verifyToken)
@@ -52,8 +51,9 @@ routers.put('/learning-outcome', updateLearningOutcome)
 routers.put('/learning-outcome-mapping', updateLearningOutcomeMapping)
 routers.put('/report-outcome-mapping',updateReportOutcomeMapping)
 routers.put("/teachers", updateTeacher);
+routers.put('/report-outcome',updateReportOutcome)
 
 routers.delete('/assessment-criteria' ,deleteAssessmentCriteria)
 routers.delete('/learning-outcome', deleteLearningOutcome)
-routers.delete('/report-outcomes', deleteReportOutcome)
+routers.delete('/report-outcome', deleteReportOutcome)
 export default routers;

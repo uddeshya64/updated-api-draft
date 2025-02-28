@@ -130,21 +130,21 @@ const updateReportOutcome = async (req, res) => {
 
 
 const deleteReportOutcome = async (req, res) => {
-    const ro_id = req.headers["ro_id"]; // Use correct parameter name
+    const id = req.query["id"]; // Use correct parameter name
 
-    if (!ro_id) {
-        return res.status(400).json({ message: "Missing required header: 'ro_id'." });
+    if (!id) {
+        return res.status(400).json({ message: "Missing required params: id." });
     }
 
-    if (isNaN(ro_id)) {
-        return res.status(400).json({ message: "Invalid 'ro_id'. It should be a number." });
+    if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid 'id'. It should be a number." });
     }
 
     try {
         // Delete report outcome
         const [deleteResult] = await db.execute(
             "DELETE FROM report_outcomes WHERE id = ?",
-            [ro_id]
+            [id]
         );
 
         if (deleteResult.affectedRows === 0) {
@@ -152,7 +152,7 @@ const deleteReportOutcome = async (req, res) => {
         }
 
         res.status(200).json({
-            message: `Deleted report outcome with id ${ro_id} successfully.`,
+            message: `Deleted report outcome with id ${id} successfully.`,
         });
     } catch (err) {
         console.error("Error deleting report outcome:", err);

@@ -5,6 +5,7 @@ const priorityValues = {
     m: 0.3,
     l: 0.2,
 };
+//Unsensible Code
 const getLearningOutcomesMapping = async (req, res) => {
     try {
         const lo_id = req.headers["lo_id"]; // lo_id provided in the header
@@ -14,9 +15,9 @@ const getLearningOutcomesMapping = async (req, res) => {
         }
         // Query to fetch ac_id and priority mapped to the given lo_id
         const [rows] = await db.query(
-            `SELECT ac_id, priority
+            `SELECT ac, priority
             FROM lo_ac_mapping
-            WHERE lo_id = ?`,
+            WHERE lo = ?`,
             [lo_id]
         );
         if (rows.length === 0) {
@@ -60,21 +61,24 @@ const updateLearningOutcomeMapping = async (req, res) => {
 
         // Fetch valid students
         const [studentRows] = await db.query(
-            "SELECT student_id FROM students_records WHERE year = ? AND class = ? AND section = ?",
+            "SELECT student FROM students_records WHERE year = ? AND class = ? AND section = ?",
             [year, classname, section]
         );
+        console.log(studentRows)
         if (studentRows.length === 0) {
             return res.status(404).json({ error: "No students found in students_records for the given filters." });
         }
-        const studentIds = studentRows.map(row => row.student_id);
-
+        const studentIds = studentRows.map(row => row.student);
+        console.log(studentIds)
         // Validate ACs
         const inputAcIds = data.map(item => item.ac_id);
+        console.log(inputAcIds)
         const [validAcRows] = await db.query(
-            "SELECT id AS ac_id FROM assessment_criterias WHERE id IN (?) AND subject = ? AND quarter = ?",
-            [inputAcIds, subject, quarter]
+            "SELECT id AS ac FROM assessment_criterias WHERE id IN (?)",
+            [inputAcIds]
         );
-        const validAcIds = validAcRows.map(row => row.ac_id);
+        console.log(validAcRows)
+        const validAcIds = validAcRows.map(row => row.id);
         if (validAcIds.length !== inputAcIds.length) {
             return res.status(404).json({ error: "Some provided ac_ids are invalid or do not match filters." });
         }

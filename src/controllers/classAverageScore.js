@@ -52,7 +52,7 @@ const getClassAverageACScore = async (req, res) => {
 };
 
 // Get average scores for Learning Outcomes (LO)
-const getClassAverageLO = async (req, res) => {
+const getClassAverageLOScore = async (req, res) => {
     try {
         const { subject, classname, year, quarter, section } = req.headers;
 
@@ -102,7 +102,7 @@ const getClassAverageLO = async (req, res) => {
 };
 
 // Get average scores for Report Outcomes (RO)
-const getClassAverageRO = async (req, res) => {
+const getClassAverageROScore = async (req, res) => {
     try {
         const { subject, classname, year, section } = req.headers;
 
