@@ -2,7 +2,7 @@ import db from "../config/db.js";
 
 // Get Assessment Criterias
 const getAssessmentCriterias = async (req, res) => {
-    const { subject, year, quarter, classname } = req.headers; 
+    const { subject, year, quarter, classname } = req.headers;
 
     console.log(`Subject: ${subject}, Year: ${year}, Quarter: ${quarter}, Class: ${classname}`);
 
@@ -14,23 +14,49 @@ const getAssessmentCriterias = async (req, res) => {
     }
 
     try {
-        const query = `
-            SELECT id, name, max_marks
+        // Fetch Assessment Criterias
+        const acQuery = `
+            SELECT id AS ac_id, name AS ac_name, max_marks
             FROM assessment_criterias
             WHERE subject = ? AND year = ? AND quarter = ? AND class = ?
         `;
+        const [assessmentCriterias] = await db.execute(acQuery, [subject, year, quarter, classname]);
 
-        const [results] = await db.execute(query, [subject, year, quarter, classname]);
-
-        if (results.length === 0) {
+        if (assessmentCriterias.length === 0) {
             return res.status(404).json({
                 message: 'No assessment criteria found for the given filters.',
             });
         }
 
+        // Get AC IDs
+        const acIds = assessmentCriterias.map(ac => ac.ac_id);
+        if (acIds.length === 0) {
+            return res.status(200).json(assessmentCriterias); // No ACs, return empty response
+        }
+
+        // Fetch LOs mapped to ACs
+        const loQuery = `
+            SELECT lam.ac, lo.id AS lo_id, lo.name AS lo_name
+            FROM learning_outcomes lo
+            JOIN lo_ac_mapping lam ON lo.id = lam.lo
+            WHERE lam.ac IN (${acIds.map(() => "?").join(", ")})
+        `;
+        const [learningOutcomes] = await db.execute(loQuery, acIds);
+
+        // Map LOs to corresponding ACs
+        const acWithLO = assessmentCriterias.map(ac => ({
+            ...ac,
+            learning_outcomes: learningOutcomes
+                .filter(lo => lo.ac === ac.ac_id)
+                .map(lo => ({
+                    lo_id: lo.lo_id,
+                    lo_name: lo.lo_name
+                }))
+        }));
+
         return res.status(200).json({
             message: 'Assessment criteria retrieved successfully',
-            assessments: results,
+            assessments: acWithLO,
         });
     } catch (err) {
         console.error('Error retrieving assessment criteria:', err);
